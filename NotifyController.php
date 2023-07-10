@@ -132,6 +132,11 @@ class NotifyController extends Controller
 
 	public function detail(Request $request)
 	{	
+		$arrPermision = app()->USER_PERMISION;
+			if(!in_array('notify_manager_view', $arrPermision)){
+			return '';
+		}
+
 		$arrType   = $this->getListNotifyType();
 		$arrObject = $this->getListObjectType();
 		$notify_id = $request->get('notify_id');

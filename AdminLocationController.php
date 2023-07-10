@@ -107,23 +107,17 @@ class AdminLocationController extends AdminController
             $validator = Validator::make($request->all(), [
                 'name'         => 'max:255|required',
                 'teaser'       => 'max:255|required',
-                'description'  => 'required',
-                'picture_data' => 'required',
-                'are_id'       => 'required|numeric|not_in:0',
-                'cit_id'       => 'required|numeric|not_in:0',
-                'order'        => 'numeric',
+                'description'  => 'required', 
+                'cit_id'       => 'required|numeric|not_in:0', 
             ],[
-                'name.required'         => 'Bạn nhập tiêu đề.',
-                'description.required'  => 'Bạn nhập mô tả.',
-                'picture_data.required' => 'Bạn chưa chọn ảnh đại diện.',
-                'are_id.required'       => 'Bạn chưa chọn khu vực.',
-                'are_id.not_in'         => 'Bạn chưa chọn khu vực.',
+                'name.required'         => 'Bạn chưa nhập tiêu đề.',
+                'description.required'  => 'Bạn chưa nhập mô tả.', 
                 'cit_id.required'       => 'Bạn chưa chọn thành phố.',
                 'cit_id.not_in'         => 'Bạn chưa chọn thành phố.',
             ]);
 
             if ($validator->fails()) {
-                return redirect('/admin/location/create')->withErrors($validator)->withInput();
+                return redirect(route('location.add'))->with(['show' => true,'error' => $validator->messages()->first()])->withInput();
             }
 
             $description    = $request->description;
@@ -159,8 +153,9 @@ class AdminLocationController extends AdminController
 
             $location = Location::create($dataInsert);
 
-            if(isset($location) && $location->ARE_ID > 0){
-                Session::flash('success', 'Thêm mới địa điểm thành công!');
+            if(isset($location) && $location->LOC_ID > 0){
+                // Session::flash('success', 'Thêm mới địa điểm thành công!');
+                return redirect(route('location.index'))->with(['show' => true,'success' => "Thêm mới địa điểm thành công" ]);
             }
         }
         return view("location.add", $data);
@@ -186,7 +181,7 @@ class AdminLocationController extends AdminController
         if($data['location']){
             $data['location'] = $data['location']->toArray();
         }else{
-            return redirect('/admin/location/');
+            return redirect('/location');
         }
         return view('location.edit', $data);
     }
@@ -258,7 +253,7 @@ class AdminLocationController extends AdminController
             if($location){
                 Session::flash('success', 'Sửa địa điểm thành công!');
             }else{
-                return redirect('/admin/location/');
+                return redirect('/location');
             }
 
         }
@@ -279,12 +274,12 @@ class AdminLocationController extends AdminController
 		}
         try {
             $news = Location::where("loc_id","=",$id)->delete();
-            Session::flash('success', 'Gỡ bài thành công!');
+            Session::flash('success', 'Gỡ thông tin thành công!');
         } catch (\Throwable $th) {
             Session::flash('error', 'Bản ghi này đang có dữ liệu liên quan!');
         }
 
-        return redirect('/admin/location/');
+        return redirect('/location');
     }
 
     public function getArea(){
@@ -356,6 +351,11 @@ class AdminLocationController extends AdminController
     }
 
     public function changeOrder(Request $request){
+        $arrPermision = app()->USER_PERMISION;
+		if(!in_array('news_manager_edit', $arrPermision)){
+			 return redirect(route("access_denied"));
+		}
+
         $id     = $request->get('id');
         $value  = $request->get('value', 0);
         $return = ['status'=> 0, 'msg' => ''];
@@ -376,6 +376,11 @@ class AdminLocationController extends AdminController
 
     public function quickChangeActive($id, $page, Request $request)
     {    
+        $arrPermision = app()->USER_PERMISION;
+		if(!in_array('news_manager_edit', $arrPermision)){
+			 return redirect(route("access_denied"));
+		}
+
         $page     = intval($page);
         $admin_id = 0;
         $news     = Location::where("loc_id","=",$id);
